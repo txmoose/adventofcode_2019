@@ -101,7 +101,6 @@ if __name__ == "__main__":
                 print(f'{noun=} | {verb=} | Solution = {100 * noun + verb}')
                 exit(0)
             else:
-                print(f'{solution[0]=} | {noun=} | {verb=}')
                 verb += 1
                 continue
 
