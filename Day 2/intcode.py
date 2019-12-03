@@ -1,163 +1,113 @@
-#! /usr/bin/env python3
-import argparse
+#!/usr/bin/env python3
 import copy
 
 
-class Intcode_Computer:
-    def __init__(self, intcode_file: str = None, cursor: int = 0):
-        self.intcode = []
-
-        if intcode_file:
-            with open(intcode_file, 'r') as file_handle:
-                for opcode in file_handle.read().split(','):
-                    self.intcode.append(int(opcode))
-
-        self.cursor = cursor
+class Intcode_Computer():
+    def __init__(self, memory, pointer = 0):
+        self.memory = memory
+        self.pointer = pointer
 
 
-    def set_cursor(self, new_cursor):
-        self.cursor = new_cursor
+    def set_memory(self, memory):
+        self.memory = copy.deepcopy(memory)
 
 
-    def set_noun(self, new_noun):
-        self.intcode[1] = new_noun
+    def store_at_address(self, value, address):
+        self.memory[address] = value
 
 
-    def set_verb(self, new_verb):
-        self.intcode[2] = new_verb
+    def set_pointer(self, pointer):
+        self.pointer = pointer
 
 
-    def set_intcode(self, new_intcode):
-        self.intcode = new_intcode
+    def set_noun(self, noun):
+        self.memory[1] = noun
 
 
-    def opcode_1(self):
-        """
-        Opcode 1 adds together numbers read from two positions
-        and stores the result in a third position.  The 3 ints
-        immediately following an Opcode 1 indicate the 3 positions.
-        The first 2 indicate positions from which to read input
-        values, and the third indicates where output should be
-        stored.
-        
-        :param pos_1: value stored at first indicated position
-        :type pos_1: int
-        :param pos_2: value stored at second indicated position
-        :type pos_2: int
-        :param pos_3: Location in intcode to insert sum
-        :type pos_3: int
-        """
+    def set_verb(self, verb):
+        self.memory[2] = verb
 
 
-        pos_1 = self.intcode[self.cursor + 1]
-        pos_2 = self.intcode[self.cursor + 2]
-        pos_3 = self.intcode[self.cursor + 3]
-        self.intcode[pos_3] = self.intcode[pos_1] + self.intcode[pos_2]
-        self.cursor += 4
+    def increment_pointer(self, increment):
+        self.pointer += increment
 
 
-    def opcode_2(self):
-        """
-        Opcode 2 multiplies together numbers read from two positions
-        and stores the result in a third position.  The 3 ints
-        immediately following an Opcode 1 indicate the 3 positions.
-        The first 2 indicate positions from which to read input
-        values, and the third indicates where output should be
-        stored
-        
-        :param pos_1: value stored at first indicated position
-        :type pos_1: int
-        :param pos_2: value stored at second indicated position
-        :type pos_2: int
-        :param pos_3: Location in intcode to insert product
-        :type pos_3: int
-        """
-        
-        
-        pos_1 = self.intcode[self.cursor + 1]
-        pos_2 = self.intcode[self.cursor + 2]
-        pos_3 = self.intcode[self.cursor + 3]
-        self.intcode[pos_3] = self.intcode[pos_1] * self.intcode[pos_2]
-        self.cursor += 4
-
-    
-    def opcode_99(self):
-        """
-        Halts the program and returns the intcode in its current state
-        """
+    def op_code_1(self):
+        num_of_values = 4
+        value_1_location = self.memory[self.pointer + 1]
+        value_2_location = self.memory[self.pointer + 2]
+        store_location = self.memory[self.pointer + 3]
+        value_1 = self.memory[value_1_location]
+        value_2 = self.memory[value_2_location]
+        store_value = value_1 + value_2
+        self.store_at_address(store_value, store_location)
+        self.increment_pointer(num_of_values)
 
 
-        print(self.intcode)
-        print("GOODBYE")
-        exit(0)
+    def op_code_2(self):
+        num_of_values = 4
+        value_1_location = self.memory[self.pointer + 1]
+        value_2_location = self.memory[self.pointer + 2]
+        store_location = self.memory[self.pointer + 3]
+        value_1 = self.memory[value_1_location]
+        value_2 = self.memory[value_2_location]
+        store_value = value_1 * value_2
+        self.store_at_address(store_value, store_location)
+        self.increment_pointer(num_of_values)
 
 
-    def opcode_99_dont_exit(self):
-        return self.intcode
+    def op_code_99(self):
+        return self.memory
 
 
     def run(self):
-        """
-        Runs the intcode computer.
-        """
         while True:
-            if self.intcode[self.cursor] == 1:
-                self.opcode_1()
-            elif self.intcode[self.cursor] == 2:
-                self.opcode_2()
-            elif self.intcode[self.cursor] == 99:
-                self.opcode_99()
-            else:
-                print("Halting and catching fire\n1202")
-                exit(1202)
-
-
-    def run_dont_exit(self):
-        while True:
-            if self.intcode[self.cursor] == 1:
-                self.opcode_1()
-            elif self.intcode[self.cursor] == 2:
-                self.opcode_2()
-            elif self.intcode[self.cursor] == 99:
-                return self.opcode_99_dont_exit()
+            if self.memory[self.pointer] == 1:
+                self.op_code_1()
+                continue
+            elif self.memory[self.pointer] == 2:
+                self.op_code_2()
+                continue
+            elif self.memory[self.pointer] == 99:
+                return self.op_code_99()
             else:
                 print("Halting and catching fire\n1202")
                 exit(1202)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--file", required=True, help="File of intcode state as CSV")
-    args = parser.parse_args()
+    INITIAL_MEMORY = []
+    INITIAL_MEMORY_FILE = "/Users/kyle/git/adventofcode/2019/Day 2/pre_1202_error.csv"
+    TARGET_SOLUTION = 19690720
 
-    INITIAL_MEMORY_STATE = []
-    with open(args.file, 'r') as memory_state:
-        for opcode in memory_state.read().split(','):
-            INITIAL_MEMORY_STATE.append(int(opcode))
+    with open(INITIAL_MEMORY_FILE, 'r') as mem:
+        for address in mem.read().split(','):
+            INITIAL_MEMORY.append(int(address))
 
-    new_computer = Intcode_Computer()
-    new_computer.set_intcode(copy.deepcopy(INITIAL_MEMORY_STATE))
+    intcode_computer = Intcode_Computer(INITIAL_MEMORY)
 
     noun = 0
     verb = 0
 
     while noun <= 99:
-        new_computer.set_noun(noun)
         while verb <= 99:
-            new_computer.set_verb(verb)
-            test_intcode = new_computer.run_dont_exit()
-            print(f'ANSWER = {new_computer.intcode[0]}')
-            print(f'ANSWER = {test_intcode[0]}')
-            if test_intcode[0] == 19690720:
-                print(f'{noun=} | {verb=} | {test_intcode[0]=} | answer={100 * noun + verb}')
+            intcode_computer.set_memory(INITIAL_MEMORY)
+            intcode_computer.set_pointer(0)
+            intcode_computer.set_noun(noun)
+            intcode_computer.set_verb(verb)
+            solution = intcode_computer.run()
+
+            if solution[0] == TARGET_SOLUTION:
+                print(f'{noun=} | {verb=} | Solution = {100 * noun + verb}')
                 exit(0)
             else:
-                print(f'{noun=} | {verb=}')
-                new_computer.set_intcode(INITIAL_MEMORY_STATE)
+                print(f'{solution[0]=} | {noun=} | {verb=}')
                 verb += 1
+                continue
+
         noun += 1
         verb = 0
 
-    print('Could not find values')
-    print(f'Final Intcode State:\t{test_intcode[0]=} | {test_intcode[1]=} | {test_intcode[2]=}')
-    print(f'Final Intcode State:\t{new_computer.intcode[0]=} | {new_computer.intcode[1]=} | {new_computer.intcode[2]=}')
+
+    print(f'Could not find solution')
+    exit(1)
