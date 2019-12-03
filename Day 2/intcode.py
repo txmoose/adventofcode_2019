@@ -4,12 +4,31 @@ import copy
 
 
 class Intcode_Computer:
-    def __init__(self, intcode_file: str, cursor: int = 0):
+    def __init__(self, intcode_file: str = None, cursor: int = 0):
         self.intcode = []
-        with open(intcode_file, 'r') as file_handle:
-            for opcode in file_handle.read().split(','):
-                self.intcode.append(int(opcode))
+
+        if intcode_file:
+            with open(intcode_file, 'r') as file_handle:
+                for opcode in file_handle.read().split(','):
+                    self.intcode.append(int(opcode))
+
         self.cursor = cursor
+
+
+    def set_cursor(self, new_cursor):
+        self.cursor = new_cursor
+
+
+    def set_noun(self, new_noun):
+        self.intcode[1] = new_noun
+
+
+    def set_verb(self, new_verb):
+        self.intcode[2] = new_verb
+
+
+    def set_intcode(self, new_intcode):
+        self.intcode = new_intcode
 
 
     def opcode_1(self):
@@ -73,6 +92,10 @@ class Intcode_Computer:
         exit(0)
 
 
+    def opcode_99_dont_exit(self):
+        return self.intcode
+
+
     def run(self):
         """
         Runs the intcode computer.
@@ -88,48 +111,15 @@ class Intcode_Computer:
                 print("Halting and catching fire\n1202")
                 exit(1202)
 
-    def find_noun_and_verb_for_specific_output(self, output: int):
-        """
-        Runs the intcode computer to find a specific noun and verb
-        that produce a specific input.  Current limit is 0 - 99 for both.
-        
-        :param output: Specific Output being searched for
-        :type output: int
-        :return: Noun and Verb that produce specific output
-        :rtype: int, int
-        """
-        self.INITIAL_MEMORY_STATE = copy.deepcopy(self.intcode)
-        self.noun = 0
-        self.verb = 0
+
+    def run_dont_exit(self):
         while True:
-            self.cursor = 0
-            self.intcode[1] = self.noun
-            self.intcode[2] = self.verb
-            print(f'DEBUG: {self.noun=} | {self.verb=} | {self.intcode[0]} | {self.cursor=}')
             if self.intcode[self.cursor] == 1:
                 self.opcode_1()
             elif self.intcode[self.cursor] == 2:
                 self.opcode_2()
             elif self.intcode[self.cursor] == 99:
-                if self.intcode[0] == output:
-                    print(f'{self.intcode[1]=}\n{self.intcode[2]=}')
-                    print('GOODBYE')
-                    exit(0)
-                elif self.verb <= 99:
-                    self.intcode = self.INITIAL_MEMORY_STATE
-                    self.verb += 1
-                    continue
-                else:
-                    if self.noun >= 99 and self.verb >= 99:
-                        print('Could not find an initial memory state for given output')
-                        print('BYE')
-                        exit(1)
-                    else:
-                        self.intcode = self.INITIAL_MEMORY_STATE
-                        self.verb = 0
-                        self.noun += 1
-                        continue
-
+                return self.opcode_99_dont_exit()
             else:
                 print("Halting and catching fire\n1202")
                 exit(1202)
@@ -140,6 +130,30 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--file", required=True, help="File of intcode state as CSV")
     args = parser.parse_args()
 
-    new_computer = Intcode_Computer(args.file)
-    #new_computer.run()
-    new_computer.find_noun_and_verb_for_specific_output(19690720)
+    INITIAL_MEMORY_STATE = []
+    with open(args.file, 'r') as memory_state:
+        for opcode in memory_state.read().split(','):
+            INITIAL_MEMORY_STATE.append(int(opcode))
+
+    new_computer = Intcode_Computer()
+    new_computer.set_intcode(copy.deepcopy(INITIAL_MEMORY_STATE))
+
+    noun = 0
+    verb = 0
+
+    while noun <= 99:
+        while verb <= 99:
+            test_intcode = new_computer.run_dont_exit()
+            if test_intcode[0] == 19690720:
+                print(f'{noun=} | {verb=} | {test_intcode[0]=} | answer={100 * noun + verb}')
+                exit(0)
+            else:
+                new_computer.set_intcode(INITIAL_MEMORY_STATE)
+                print(f'INCREMENTING VERB FROM {verb}')
+                verb += 1
+        print(f'INCREMENTING NOUN FROM {noun}')
+        noun += 1
+        verb = 0
+
+    print('Could not find values')
+    print(f'Final Intcode State:\n{test_intcode[0]=} | {test_intcode[1]=} | {test_intcode[2]=}')
