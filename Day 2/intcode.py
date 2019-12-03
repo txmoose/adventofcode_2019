@@ -142,18 +142,22 @@ if __name__ == "__main__":
     verb = 0
 
     while noun <= 99:
+        new_computer.set_noun(noun)
         while verb <= 99:
+            new_computer.set_verb(verb)
             test_intcode = new_computer.run_dont_exit()
+            print(f'ANSWER = {new_computer.intcode[0]}')
+            print(f'ANSWER = {test_intcode[0]}')
             if test_intcode[0] == 19690720:
                 print(f'{noun=} | {verb=} | {test_intcode[0]=} | answer={100 * noun + verb}')
                 exit(0)
             else:
+                print(f'{noun=} | {verb=}')
                 new_computer.set_intcode(INITIAL_MEMORY_STATE)
-                print(f'INCREMENTING VERB FROM {verb}')
                 verb += 1
-        print(f'INCREMENTING NOUN FROM {noun}')
         noun += 1
         verb = 0
 
     print('Could not find values')
-    print(f'Final Intcode State:\n{test_intcode[0]=} | {test_intcode[1]=} | {test_intcode[2]=}')
+    print(f'Final Intcode State:\t{test_intcode[0]=} | {test_intcode[1]=} | {test_intcode[2]=}')
+    print(f'Final Intcode State:\t{new_computer.intcode[0]=} | {new_computer.intcode[1]=} | {new_computer.intcode[2]=}')
